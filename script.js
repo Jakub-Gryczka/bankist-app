@@ -93,13 +93,11 @@ let currentAccount,
   sorted = false;
 
 // Functions
-const formatNumber = function (locale, currency, value) {
-  return new Intl.NumberFormat(locale, {
+const formatNumber = (locale, currency, value) =>
+  new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currency,
   }).format(value);
-};
-
 const formatDate = (locale, movDate) =>
   new Intl.DateTimeFormat(locale, {
     day: 'numeric',
@@ -108,6 +106,7 @@ const formatDate = (locale, movDate) =>
   }).format(new Date(movDate));
 
 const displayMovements = function (acc, sorted = false) {
+  containerMovements.innerHTML = '';
   const sortedArr = sorted
     ? acc.movements.slice().sort((a, b) => a - b)
     : acc.movements;
@@ -140,9 +139,41 @@ const calcDisplayBalance = function (acc) {
     acc.balance
   );
 };
+
+const calcDisplaySummary = function (acc) {
+  const income = Number(
+    acc.movements.filter(mov => mov > 0).reduce((acc, curr) => acc + curr, 0)
+  ).toFixed(1);
+
+  const outcome = Math.abs(
+    Number(
+      acc.movements
+        .filter(mov => mov < 0)
+        .reduce((acc, curr) => acc + curr, 0)
+        .toFixed(1)
+    )
+  );
+
+  const interest = Number(
+    acc.movements
+      .filter(mov => mov > 0)
+      .map(deposit => (deposit * acc.interestRate) / 100)
+      .reduce((acc, curr) => acc + curr, 0)
+  ).toFixed(2);
+
+  labelSumIn.textContent = formatNumber(acc.locale, acc.currency, income);
+  labelSumOut.textContent = formatNumber(acc.locale, acc.currency, outcome);
+  labelSumInterest.textContent = formatNumber(
+    acc.locale,
+    acc.currency,
+    interest
+  );
+};
+
 const updateUI = function (acc) {
   calcDisplayBalance(acc);
   displayMovements(acc);
+  calcDisplaySummary(acc);
 };
 
 // Creating logins
@@ -172,8 +203,24 @@ btnLogin.addEventListener('click', function (e) {
   }
   btnSort.addEventListener('click', function () {
     sorted = !sorted;
-    containerMovements.innerHTML = '';
     displayMovements(currentAccount, sorted);
   });
   updateUI(currentAccount);
+});
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const transferToAccount = accounts.find(
+    acc => acc.login === inputTransferTo.value
+  );
+  if (transferToAccount && transferToAccount !== currentAccount) {
+    currentAccount.movements.push(Number(-inputTransferAmount.value));
+    currentAccount.movementsDates.push(new Date());
+    transferToAccount.movements.push(Number(inputTransferAmount.value));
+    transferToAccount.movementsDates.push(new Date());
+    inputTransferTo.value = '';
+    inputTransferAmount.value = '';
+    inputTransferAmount.blur();
+    updateUI(currentAccount);
+  }
 });
