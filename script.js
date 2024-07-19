@@ -89,8 +89,7 @@ const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 /////////////////////////////////////////////////
 
 // Global variables
-let currentAccount,
-  sorted = false;
+let currentAccount;
 
 // Functions
 const formatNumber = (locale, currency, value) =>
@@ -202,6 +201,7 @@ btnLogin.addEventListener('click', function (e) {
   currentAccount = accounts.find(
     accName => accName.login === inputLoginUsername.value
   );
+  console.log(currentAccount);
   if (Number(inputLoginPin.value) === currentAccount?.pin) {
     containerApp.style.opacity = 100;
     labelWelcome.textContent = `Welcome back, ${
@@ -211,6 +211,7 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginUsername.value = '';
     inputLoginPin.blur();
   }
+  let sorted = false;
   btnSort.addEventListener('click', function () {
     sorted = !sorted;
     displayMovements(currentAccount, sorted);
