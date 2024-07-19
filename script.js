@@ -105,6 +105,16 @@ const formatDate = (locale, movDate) =>
     year: 'numeric',
   }).format(new Date(movDate));
 
+const transfer = function (sender, receiver) {
+  sender.movements.push(Number(-inputTransferAmount.value));
+  sender.movementsDates.push(new Date());
+  receiver.movements.push(Number(inputTransferAmount.value));
+  receiver.movementsDates.push(new Date());
+  inputTransferTo.value = '';
+  inputTransferAmount.value = '';
+  inputTransferAmount.blur();
+};
+
 const displayMovements = function (acc, sorted = false) {
   containerMovements.innerHTML = '';
   const sortedArr = sorted
@@ -213,14 +223,10 @@ btnTransfer.addEventListener('click', function (e) {
   const transferToAccount = accounts.find(
     acc => acc.login === inputTransferTo.value
   );
+
   if (transferToAccount && transferToAccount !== currentAccount) {
-    currentAccount.movements.push(Number(-inputTransferAmount.value));
-    currentAccount.movementsDates.push(new Date());
-    transferToAccount.movements.push(Number(inputTransferAmount.value));
-    transferToAccount.movementsDates.push(new Date());
-    inputTransferTo.value = '';
-    inputTransferAmount.value = '';
-    inputTransferAmount.blur();
+    transfer(currentAccount, transferToAccount);
+
     updateUI(currentAccount);
   }
 });
