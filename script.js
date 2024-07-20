@@ -112,6 +112,20 @@ const transfer = function (sender, receiver) {
   inputTransferTo.value = '';
   inputTransferAmount.value = '';
   inputTransferAmount.blur();
+  updateUI(sender);
+};
+
+const loan = function (acc) {
+  const highestDeposit = acc.movements.some(
+    mov => mov > inputLoanAmount.value * 0.1
+  );
+  if (highestDeposit && inputLoanAmount.value > 0) {
+    acc.movements.push(Number(inputLoanAmount.value));
+    acc.movementsDates.push(new Date());
+    inputLoanAmount.value = '';
+    inputLoanAmount.blur();
+    updateUI(acc);
+  }
 };
 
 const displayMovements = function (acc, sorted = false) {
@@ -201,7 +215,6 @@ btnLogin.addEventListener('click', function (e) {
   currentAccount = accounts.find(
     accName => accName.login === inputLoginUsername.value
   );
-  console.log(currentAccount);
   if (Number(inputLoginPin.value) === currentAccount?.pin) {
     containerApp.style.opacity = 100;
     labelWelcome.textContent = `Welcome back, ${
@@ -225,9 +238,16 @@ btnTransfer.addEventListener('click', function (e) {
     acc => acc.login === inputTransferTo.value
   );
 
-  if (transferToAccount && transferToAccount !== currentAccount) {
+  if (
+    transferToAccount &&
+    transferToAccount !== currentAccount &&
+    Number(inputTransferAmount.value) > 0 &&
+    Number(inputTransferAmount.value) <= currentAccount.balance
+  ) {
     transfer(currentAccount, transferToAccount);
-
-    updateUI(currentAccount);
   }
+});
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+  loan(currentAccount);
 });
