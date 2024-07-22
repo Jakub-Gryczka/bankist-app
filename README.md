@@ -57,7 +57,7 @@ Bankist App is a simulation of a banking application that allows users to manage
 
 ## Live Preview
 
-Live link: [Link]()
+Live link: [LINK](https://jakub-gryczka.github.io/bankist-app/)
 
 ## Author
 
