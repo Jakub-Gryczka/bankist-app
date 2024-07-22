@@ -89,7 +89,7 @@ const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 /////////////////////////////////////////////////
 
 // Global variables
-let currentAccount;
+let currentAccount, timer;
 
 // Functions
 const formatNumber = (locale, currency, value) =>
@@ -116,16 +116,45 @@ const transfer = function (sender, receiver) {
 };
 
 const loan = function (acc) {
+  let maxLoans = 0;
   const highestDeposit = acc.movements.some(
     mov => mov > inputLoanAmount.value * 0.1
   );
-  if (highestDeposit && inputLoanAmount.value > 0) {
+  if (highestDeposit && inputLoanAmount.value > 0 && maxLoans <= 2) {
     acc.movements.push(Number(inputLoanAmount.value));
     acc.movementsDates.push(new Date());
     inputLoanAmount.value = '';
     inputLoanAmount.blur();
     updateUI(acc);
+    maxLoans++;
   }
+};
+
+const logout = function () {
+  containerApp.style.opacity = 0;
+  labelWelcome.textContent = 'Log in to get started';
+  currentAccount = null;
+  clearInterval(timer);
+  labelTimer.textContent = '00:00';
+};
+const countdownTimer = function () {
+  let duration = 300;
+  timer = setInterval(function () {
+    const minutes = String(parseInt(duration / 60, 10)).padStart(2, '0');
+    const seconds = String(duration % 60).padStart(2, '0');
+
+    labelTimer.textContent = `${minutes}:${seconds}`;
+
+    if (duration === 0) {
+      clearInterval(timer);
+      logout();
+    }
+    duration--;
+  }, 1000);
+};
+const resetTimer = function (timer, resetFun) {
+  clearInterval(timer);
+  resetFun();
 };
 
 const displayMovements = function (acc, sorted = false) {
@@ -197,6 +226,7 @@ const updateUI = function (acc) {
   calcDisplayBalance(acc);
   displayMovements(acc);
   calcDisplaySummary(acc);
+  resetTimer(timer, countdownTimer);
 };
 
 // Creating logins
@@ -215,21 +245,24 @@ btnLogin.addEventListener('click', function (e) {
   currentAccount = accounts.find(
     accName => accName.login === inputLoginUsername.value
   );
-  if (Number(inputLoginPin.value) === currentAccount?.pin) {
-    containerApp.style.opacity = 100;
-    labelWelcome.textContent = `Welcome back, ${
-      currentAccount.owner.split(' ')[0]
-    }!`;
-    inputLoginPin.value = '';
-    inputLoginUsername.value = '';
-    inputLoginPin.blur();
+  if (currentAccount?.login) {
+    if (Number(inputLoginPin.value) === currentAccount?.pin) {
+      containerApp.style.opacity = 100;
+      labelWelcome.textContent = `Welcome back, ${
+        currentAccount.owner.split(' ')[0]
+      }!`;
+      inputLoginPin.value = '';
+      inputLoginUsername.value = '';
+      inputLoginPin.blur();
+    }
+    let sorted = false;
+    btnSort.addEventListener('click', function () {
+      sorted = !sorted;
+      displayMovements(currentAccount, sorted);
+      resetTimer(timer, countdownTimer);
+    });
+    updateUI(currentAccount);
   }
-  let sorted = false;
-  btnSort.addEventListener('click', function () {
-    sorted = !sorted;
-    displayMovements(currentAccount, sorted);
-  });
-  updateUI(currentAccount);
 });
 
 btnTransfer.addEventListener('click', function (e) {
@@ -250,4 +283,15 @@ btnTransfer.addEventListener('click', function (e) {
 btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
   loan(currentAccount);
+});
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+  if (
+    inputCloseUsername.value === currentAccount.login &&
+    Number(inputClosePin.value) === currentAccount.pin
+  )
+    delete currentAccount.login, currentAccount.pin;
+  logout(currentAccount);
+  inputCloseUsername.blur();
+  inputClosePin.blur();
 });
